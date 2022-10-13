@@ -20,6 +20,8 @@
         </plugins>
     </build>
 
+
+
     <dependencies>
 <!--         Ваши зависимости-->
          <!-- https://mvnrepository.com/artifact/junit/junit -->
@@ -29,6 +31,12 @@
              <version>4.13.2</version>
              <scope>test</scope>
          </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.8.1</version>
+        </dependency>
 
         <dependency>
             <groupId>mysql</groupId>
