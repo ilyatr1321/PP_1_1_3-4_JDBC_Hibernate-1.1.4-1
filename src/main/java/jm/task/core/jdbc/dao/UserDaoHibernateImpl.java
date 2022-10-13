@@ -1,108 +1,91 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+
+import java.util.List;
+
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-
-import javax.persistence.Id;
-import java.util.List;
-import java.util.Properties;
+import org.hibernate.engine.query.spi.HQLQueryPlan;
 
 public class UserDaoHibernateImpl implements UserDao {
+    public UserDaoHibernateImpl() {
 
+    }
 
     @Override
     public void createUsersTable() {
-        Transaction transaction = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.createNativeQuery("CREATE TABLE IF NOT EXISTS mydbtest.users (\n" +
-                    "                      id BIGINT NOT NULL AUTO_INCREMENT,\n" +
-                    "                      name VARCHAR(45) NOT NULL,\n" +
-                    "                      lastName VARCHAR(45) NOT NULL,\n" +
-                    "                      age TINYINT NOT NULL,\n" +
-                    "                      PRIMARY KEY (id),\n" +
-                    "                      UNIQUE INDEX id_UNIQUE (id ASC) VISIBLE)");
+            Transaction transaction = session.beginTransaction();
+            String str = "create table if not exists users (\n" +
+                    "    id BIGINT NOT NULL AUTO_INCREMENT,\n" +
+                    "    name varchar(20) NOT NULL,\n" +
+                    "    lastName varchar(20) NOT NULL,\n" +
+                    "    age int (3) NOT NULL,\n" +
+                    "    PRIMARY KEY (id)\n" +
+                    ");";
+            session.createSQLQuery(str).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
-            if (transaction!=null) transaction.rollback();
             e.printStackTrace();
         }
     }
 
     @Override
     public void dropUsersTable() {
-        Transaction transaction = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.createNativeQuery("DROP TABLE IF EXISTS users;");
+            Transaction transaction = session.beginTransaction();
+            session.createSQLQuery("drop table if exists users").executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
-            if (transaction!=null) transaction.rollback();
             e.printStackTrace();
         }
-
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Transaction transaction = null;
         try (Session session = Util.getSessionFactory().openSession()) {
-            transaction = session.beginTransaction();
-            session.save(new User(name,lastName,age));
+            Transaction transaction = session.beginTransaction();
+            User user = new User(name, lastName, age);
+            session.save(user);
             transaction.commit();
-        } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
+            System.out.println("User с именем – " + name + " добавлен в базу данных");
+        } catch (HibernateException e) {
             e.printStackTrace();
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = Util.getSessionFactory().openSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
+        try (Session session = Util.getSessionFactory().openSession()) {
+            Transaction transaction = session.beginTransaction();
             session.delete(session.get(User.class, id));
             transaction.commit();
         } catch (HibernateException e) {
             e.printStackTrace();
-            if (transaction != null) {
-                transaction.rollback();
-            }
-        } finally {
-            session.close();
         }
     }
 
     @Override
     public List<User> getAllUsers() {
-        List<User> userList = null;
-        Transaction transaction = null;
-        try (Session session = Util.getSessionFactory().openSession();) {
-            transaction = session.beginTransaction();
-            userList = session.createQuery("from User").getResultList();
-            transaction.commit();
-            return userList;
+        try (Session session = Util.getSessionFactory().openSession()) {
+            List<User> users = session.createQuery("FROM User").list();
+            System.out.println(users);
+            return users;
         } catch (HibernateException e) {
-            if (transaction!=null) transaction.rollback();
             e.printStackTrace();
-        }
-        return null;
+        }return null;
     }
 
     @Override
     public void cleanUsersTable() {
-        try (Session session = Util.getSessionFactory().openSession();) {
-            session.beginTransaction();
-            session.createQuery("delete User");
-            session.getTransaction().commit();
-        }catch (HibernateException e) {
+        try (Session session = Util.getSessionFactory().openSession()) {
+            Transaction transaction = session.beginTransaction();
+            session.createNativeQuery("truncate table users").executeUpdate();
+            transaction.commit();
+        } catch (HibernateException e) {
             e.printStackTrace();
         }
     }
